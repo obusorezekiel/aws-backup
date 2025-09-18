@@ -8,14 +8,39 @@ provider "aws" {
   region = var.region
 }
 
-variable "environment"            { type = string default = "prod" }
-variable "region"                 { type = string default = "us-east-1" }
-variable "rds_endpoint"           { type = string }
-variable "db_name"                { type = string }
-variable "secret_arn"             { type = string }
-variable "target_bucket"          { type = string }
-variable "backup_account_kms_arn" { type = string }
-variable "backup_schedule"        { type = string default = "cron(0 3 ? * SUN *)" }
+variable "environment" {
+  type    = string
+  default = "prod"
+}
+
+variable "region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "rds_endpoint" {
+  type = string
+}
+
+variable "db_name" {
+  type = string
+}
+
+variable "secret_arn" {
+  type = string
+}
+variable "target_bucket" {
+  type = string
+}
+
+variable "backup_account_kms_arn" {
+  type = string
+}
+
+variable "backup_schedule" {
+  type    = string
+  default = "cron(0 3 ? * SUN *)"
+}
 
 locals {
   tags = {
