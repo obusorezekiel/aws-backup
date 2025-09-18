@@ -1,0 +1,9 @@
+region             = "us-east-1"
+rds_endpoint       = "database-1.cluster-xyz123.us-east-1.rds.amazonaws.com"
+db_name            = "dw"
+secret_arn         = "arn:aws:secretsmanager:us-east-1:123456789012:secret:dw-credentials-abc123"
+target_bucket      = "company-db-layer3-backups"
+backup_kms_key_arn = "arn:aws:kms:ap-southeast-4:123456789012:key/11112222-3333-4444-5555-666677778888"
+backup_schedule    = "cron(30 1 * * ? *)"
+# subnet_ids         = ["subnet-abc", "subnet-def"]
+# security_group_ids = ["sg-123456"] 

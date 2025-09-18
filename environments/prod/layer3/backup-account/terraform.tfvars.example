@@ -1,0 +1,6 @@
+region                 = "ap-southeast-4"
+layer3_bucket_name     = "company-db-layer3-backups"
+kms_key_arn            = "arn:aws:kms:ap-southeast-4:123456789012:key/11112222-3333-4444-5555-666677778888"
+allowed_source_role_arns = [
+  "arn:aws:iam::353928175117:role/rds-pgdump-layer3-codebuild-role-prod"
+] 

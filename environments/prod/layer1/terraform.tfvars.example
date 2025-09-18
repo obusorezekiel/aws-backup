@@ -1,0 +1,7 @@
+environment       = "prod"
+region            = "us-east-1"
+rds_instance_arns = [
+  "arn:aws:rds:us-east-1:123456789012:db:database-1",
+  "arn:aws:rds:us-east-1:123456789012:db:database-2"
+]
+# sns_topic_arn = "arn:aws:sns:us-east-1:123456789012:rds-backup-notifications-prod" 

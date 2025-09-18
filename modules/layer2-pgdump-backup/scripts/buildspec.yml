@@ -1,0 +1,14 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - yum update -y
+      - yum install -y jq
+      - |
+        if ! command -v psql >/dev/null 2>&1; then
+          amazon-linux-extras install -y postgresql14 || amazon-linux-extras install -y postgresql13 || yum install -y postgresql
+        fi
+  build:
+    commands:
+      - chmod +x ${CODEBUILD_SRC_DIR}/scripts/pg_dump_to_s3.sh
+      - ${CODEBUILD_SRC_DIR}/scripts/pg_dump_to_s3.sh 
