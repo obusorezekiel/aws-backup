@@ -1,14 +1,41 @@
 terraform {
-  required_providers { aws = { source = "hashicorp/aws", version = "~> 5.0" } }
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
 }
 
-variable "layer3_bucket_name" { type = string }
-variable "kms_key_arn" { type = string }
-variable "transition_to_glacier_days" { type = number default = 30 }
-variable "transition_to_deep_days" { type = number default = 90 }
-variable "expire_after_days" { type = number default = 2555 }
-variable "allowed_source_role_arns" { type = list(string) default = [] }
-variable "tags" { type = map(string) default = {} }
+variable "layer3_bucket_name" {
+  type = string
+}
+
+variable "kms_key_arn" {
+  type = string
+}
+
+variable "transition_to_glacier_days" {
+  type    = number
+  default = 30
+}
+
+variable "transition_to_deep_days" {
+  type    = number
+  default = 90
+}
+
+variable "expire_after_days" {
+  type    = number
+  default = 2555
+}
+
+variable "allowed_source_role_arns" {
+  type    = list(string)
+  default = []
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
 
 resource "aws_s3_bucket" "layer3" {
   bucket              = var.layer3_bucket_name
@@ -26,7 +53,9 @@ resource "aws_s3_bucket_public_access_block" "pab" {
 
 resource "aws_s3_bucket_versioning" "ver" {
   bucket = aws_s3_bucket.layer3.id
-  versioning_configuration { status = "Enabled" }
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "enc" {
@@ -56,9 +85,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "lc" {
     id     = "transition-and-expire"
     status = "Enabled"
 
-    transition { days = var.transition_to_glacier_days storage_class = "GLACIER" }
-    transition { days = var.transition_to_deep_days    storage_class = "DEEP_ARCHIVE" }
-    expiration { days = var.expire_after_days }
+    transition {
+      days          = var.transition_to_glacier_days
+      storage_class = "GLACIER"
+    }
+    transition {
+      days          = var.transition_to_deep_days
+      storage_class = "DEEP_ARCHIVE"
+    }
+    expiration {
+      days = var.expire_after_days
+    }
   }
 }
 
@@ -67,52 +104,96 @@ data "aws_iam_policy_document" "bucket" {
     sid     = "DenyInsecureTransport"
     effect  = "Deny"
     actions = ["s3:*"]
-    principals { type = "*" identifiers = ["*"] }
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
     resources = [aws_s3_bucket.layer3.arn, "${aws_s3_bucket.layer3.arn}/*"]
-    condition { test = "Bool" variable = "aws:SecureTransport" values = ["false"] }
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
   }
 
   statement {
     sid     = "RequireKMSEncryption"
     effect  = "Deny"
     actions = ["s3:PutObject"]
-    principals { type = "*" identifiers = ["*"] }
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
     resources = ["${aws_s3_bucket.layer3.arn}/*"]
-    condition { test = "StringNotEquals" variable = "s3:x-amz-server-side-encryption" values = ["aws:kms"] }
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["aws:kms"]
+    }
   }
 
   statement {
     sid     = "RequireSpecificKMSKey"
     effect  = "Deny"
     actions = ["s3:PutObject"]
-    principals { type = "*" identifiers = ["*"] }
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
     resources = ["${aws_s3_bucket.layer3.arn}/*"]
-    condition { test = "StringNotEquals" variable = "s3:x-amz-server-side-encryption-aws-kms-key-id" values = [var.kms_key_arn] }
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-server-side-encryption-aws-kms-key-id"
+      values   = [var.kms_key_arn]
+    }
   }
 
   statement {
     sid     = "RequireObjectLockCompliance"
     effect  = "Deny"
     actions = ["s3:PutObject"]
-    principals { type = "*" identifiers = ["*"] }
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
     resources = ["${aws_s3_bucket.layer3.arn}/*"]
-    condition { test = "StringNotEquals" variable = "s3:object-lock-mode" values = ["COMPLIANCE"] }
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:object-lock-mode"
+      values   = ["COMPLIANCE"]
+    }
   }
 
   statement {
     sid     = "RequireMinimumRetention"
     effect  = "Deny"
     actions = ["s3:PutObject"]
-    principals { type = "*" identifiers = ["*"] }
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
     resources = ["${aws_s3_bucket.layer3.arn}/*"]
-    condition { test = "NumericLessThan" variable = "s3:object-lock-remaining-retention-days" values = [var.expire_after_days] }
+    condition {
+      test     = "NumericLessThan"
+      variable = "s3:object-lock-remaining-retention-days"
+      values   = [var.expire_after_days]
+    }
   }
 
   statement {
     sid    = "AllowSourceAccountsWrites"
     effect = "Allow"
-    actions = ["s3:PutObject","s3:PutObjectAcl","s3:PutObjectRetention","s3:PutObjectLegalHold","s3:AbortMultipartUpload"]
-    principals { type = "AWS" identifiers = var.allowed_source_role_arns }
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:PutObjectRetention",
+      "s3:PutObjectLegalHold",
+      "s3:AbortMultipartUpload"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = var.allowed_source_role_arns
+    }
     resources = ["${aws_s3_bucket.layer3.arn}/*"]
   }
 }

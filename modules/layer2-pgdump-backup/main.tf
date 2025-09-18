@@ -34,16 +34,40 @@ resource "aws_codebuild_project" "pg_dump_backup" {
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
 
-    environment_variable { name = "ENVIRONMENT"         value = var.environment }
-    environment_variable { name = "AWS_DEFAULT_REGION"  value = var.region }
-    environment_variable { name = "RDS_ENDPOINT"        value = var.rds_endpoint }
-    environment_variable { name = "DB_NAME"             value = var.db_name }
-    environment_variable { name = "SECRET_ARN"          value = var.secret_arn }
-    environment_variable { name = "BACKUP_KMS_KEY_ARN"  value = var.backup_account_kms_arn }
-    environment_variable { name = "TARGET_BUCKET"       value = var.target_bucket }
+    environment_variable {
+      name  = "ENVIRONMENT"
+      value = var.environment
+    }
+    environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.region
+    }
+    environment_variable {
+      name  = "RDS_ENDPOINT"
+      value = var.rds_endpoint
+    }
+    environment_variable {
+      name  = "DB_NAME"
+      value = var.db_name
+    }
+    environment_variable {
+      name  = "SECRET_ARN"
+      value = var.secret_arn
+    }
+    environment_variable {
+      name  = "BACKUP_KMS_KEY_ARN"
+      value = var.backup_account_kms_arn
+    }
+    environment_variable {
+      name  = "TARGET_BUCKET"
+      value = var.target_bucket
+    }
   }
 
-  source { type = "NO_SOURCE" buildspec = file("${path.module}/scripts/buildspec.yml") }
+  source {
+    type      = "NO_SOURCE"
+    buildspec = file("${path.module}/scripts/buildspec.yml")
+  }
 
   tags = var.tags
 }

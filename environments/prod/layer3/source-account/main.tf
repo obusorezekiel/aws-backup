@@ -8,15 +8,45 @@ provider "aws" {
   region = var.region
 }
 
-variable "region" { type = string default = "us-east-1" }
-variable "rds_endpoint" { type = string }
-variable "db_name" { type = string }
-variable "secret_arn" { type = string }
-variable "target_bucket" { type = string }
-variable "backup_kms_key_arn" { type = string }
-variable "backup_schedule" { type = string default = "cron(30 1 * * ? *)" }
-variable "subnet_ids" { type = list(string) default = [] }
-variable "security_group_ids" { type = list(string) default = [] }
+variable "region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "rds_endpoint" {
+  type = string
+}
+
+variable "db_name" {
+  type = string
+}
+
+variable "secret_arn" {
+  type = string
+}
+
+variable "target_bucket" {
+  type = string
+}
+
+variable "backup_kms_key_arn" {
+  type = string
+}
+
+variable "backup_schedule" {
+  type    = string
+  default = "cron(30 1 * * ? *)"
+}
+
+variable "subnet_ids" {
+  type    = list(string)
+  default = []
+}
+
+variable "security_group_ids" {
+  type    = list(string)
+  default = []
+}
 
 locals {
   tags = {
