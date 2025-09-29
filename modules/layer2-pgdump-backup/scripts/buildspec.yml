@@ -2,13 +2,37 @@ version: 0.2
 phases:
   install:
     commands:
-      - yum update -y
-      - yum install -y jq
+      - set -e
+      # AL2023: install PG 17 from PGDG if not in base repos
       - |
-        if ! command -v psql >/dev/null 2>&1; then
-          amazon-linux-extras install -y postgresql14 || amazon-linux-extras install -y postgresql13 || yum install -y postgresql
+        if command -v dnf >/dev/null 2>&1; then
+          dnf -y update
+          dnf install -y postgresql17 jq || (
+            dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm &&
+            dnf -qy module disable postgresql &&
+            dnf -y install postgresql17 jq
+          )
+        else
+          yum update -y
+          yum install -y jq
+          amazon-linux-extras install -y postgresql17 || amazon-linux-extras install -y postgresql14 || yum install -y postgresql -y
         fi
+      - psql --version
   build:
     commands:
-      - chmod +x ${CODEBUILD_SRC_DIR}/scripts/pg_dump_to_s3.sh
-      - ${CODEBUILD_SRC_DIR}/scripts/pg_dump_to_s3.sh 
+      - |
+        cat >/tmp/pg_dump_to_s3.sh <<'EOF'
+        #!/bin/bash
+        set -euo pipefail
+        SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ARN" --region "$AWS_DEFAULT_REGION" --query SecretString --output text)
+        USERNAME=$(echo "$SECRET_JSON" | jq -r '.username')
+        PASSWORD=$(echo "$SECRET_JSON" | jq -r '.password')
+        STAMP=$(date +%Y%m%d_%H%M%S)
+        FILE="/tmp/${DB_NAME}_${STAMP}.sql.gz"
+        PREFIX="layer2/${DB_NAME}/$(date +%Y)/$(date +%m)/$(date +%d)"
+        KEY="${PREFIX}/${DB_NAME}_${STAMP}.sql.gz"
+        PGPASSWORD="$PASSWORD" pg_dump -h "$RDS_ENDPOINT" -U "$USERNAME" -d "$DB_NAME" -F p --no-owner --no-privileges --encoding=UTF8 --verbose | gzip -c > "$FILE"
+        aws s3api put-object --bucket "$TARGET_BUCKET" --key "$KEY" --body "$FILE" --server-side-encryption aws:kms --ssekms-key-id "$BACKUP_KMS_KEY_ARN"
+        EOF
+      - chmod +x /tmp/pg_dump_to_s3.sh
+      - /tmp/pg_dump_to_s3.sh

@@ -9,19 +9,20 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "rds_endpoint" {
-  description = "RDS endpoint"
-  type        = string
+variable "databases" {
+  description = "Databases to back up"
+  type = list(object({
+    rds_endpoint    = string
+    db_name         = string
+    secret_arn      = string
+    backup_schedule = optional(string)
+  }))
 }
 
-variable "db_name" {
-  description = "Database name"
+variable "backup_schedule" {
+  description = "Default EventBridge cron expression if DB does not specify one"
   type        = string
-}
-
-variable "secret_arn" {
-  description = "Secrets Manager ARN with {username,password}"
-  type        = string
+  default     = "cron(0 3 ? * SUN *)"
 }
 
 variable "target_bucket" {
@@ -32,12 +33,6 @@ variable "target_bucket" {
 variable "backup_account_kms_arn" {
   description = "Backup account KMS key ARN for SSE-KMS"
   type        = string
-}
-
-variable "backup_schedule" {
-  description = "EventBridge cron expression"
-  type        = string
-  default     = "cron(0 3 ? * SUN *)"
 }
 
 variable "tags" {

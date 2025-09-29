@@ -18,17 +18,6 @@ variable "region" {
   default = "us-east-1"
 }
 
-variable "rds_endpoint" {
-  type = string
-}
-
-variable "db_name" {
-  type = string
-}
-
-variable "secret_arn" {
-  type = string
-}
 variable "target_bucket" {
   type = string
 }
@@ -42,6 +31,15 @@ variable "backup_schedule" {
   default = "cron(0 3 ? * SUN *)"
 }
 
+variable "databases" {
+  type = list(object({
+    rds_endpoint    = string
+    db_name         = string
+    secret_arn      = string
+    backup_schedule = optional(string)
+  }))
+}
+
 locals {
   tags = {
     Environment = var.environment
@@ -51,15 +49,12 @@ locals {
 }
 
 module "layer2" {
-  source = "../../../../infrastructure_consolidation/modules/layer2-pgdump-backup"
-
+  source                 = "../../../../infrastructure_consolidation/modules/layer2-pgdump-backup"
   environment            = var.environment
   region                 = var.region
-  rds_endpoint           = var.rds_endpoint
-  db_name                = var.db_name
-  secret_arn             = var.secret_arn
+  databases              = var.databases   # <— add this
   target_bucket          = var.target_bucket
   backup_account_kms_arn = var.backup_account_kms_arn
   backup_schedule        = var.backup_schedule
   tags                   = local.tags
-} 
+}

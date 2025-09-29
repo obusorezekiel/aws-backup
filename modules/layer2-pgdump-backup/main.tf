@@ -22,8 +22,13 @@ resource "aws_iam_role_policy" "codebuild_policy" {
   })
 }
 
+locals {
+  db_map = { for d in var.databases : d.db_name => d }
+}
+
 resource "aws_codebuild_project" "pg_dump_backup" {
-  name         = "rds-pgdump-backup-${var.environment}"
+  for_each     = local.db_map
+  name         = "rds-pgdump-backup-${var.environment}-${each.value.db_name}"
   service_role = aws_iam_role.codebuild_role.arn
 
   artifacts { type = "NO_ARTIFACTS" }
@@ -44,15 +49,15 @@ resource "aws_codebuild_project" "pg_dump_backup" {
     }
     environment_variable {
       name  = "RDS_ENDPOINT"
-      value = var.rds_endpoint
+      value = each.value.rds_endpoint
     }
     environment_variable {
       name  = "DB_NAME"
-      value = var.db_name
+      value = each.value.db_name
     }
     environment_variable {
       name  = "SECRET_ARN"
-      value = var.secret_arn
+      value = each.value.secret_arn
     }
     environment_variable {
       name  = "BACKUP_KMS_KEY_ARN"
@@ -73,8 +78,9 @@ resource "aws_codebuild_project" "pg_dump_backup" {
 }
 
 resource "aws_cloudwatch_event_rule" "schedule" {
-  name                = "rds-pgdump-schedule-${var.environment}"
-  schedule_expression = var.backup_schedule
+  for_each            = local.db_map
+  name                = "rds-pgdump-schedule-${var.environment}-${each.value.db_name}"
+  schedule_expression = coalesce(try(each.value.backup_schedule, null), var.backup_schedule)
   tags                = var.tags
 }
 
@@ -87,12 +93,13 @@ resource "aws_iam_role" "events_invoke_codebuild" {
 resource "aws_iam_role_policy" "events_invoke_codebuild_policy" {
   name = "rds-pgdump-events-policy-${var.environment}"
   role = aws_iam_role.events_invoke_codebuild.id
-  policy = jsonencode({ Version = "2012-10-17", Statement = [{ Effect = "Allow", Action = ["codebuild:StartBuild"], Resource = aws_codebuild_project.pg_dump_backup.arn }] })
+  policy = jsonencode({ Version = "2012-10-17", Statement = [{ Effect = "Allow", Action = ["codebuild:StartBuild"], Resource = "*" }] })
 }
 
 resource "aws_cloudwatch_event_target" "codebuild_target" {
-  rule      = aws_cloudwatch_event_rule.schedule.name
+  for_each = local.db_map
+  rule     = aws_cloudwatch_event_rule.schedule[each.key].name
   target_id = "start-codebuild"
-  arn       = aws_codebuild_project.pg_dump_backup.arn
+  arn       = aws_codebuild_project.pg_dump_backup[each.key].arn
   role_arn  = aws_iam_role.events_invoke_codebuild.arn
 } 
