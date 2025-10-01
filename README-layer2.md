@@ -98,7 +98,7 @@ Deploy
 
 Run a backup now (per DB)
 - Project: `rds-pgdump-backup-prod-<db_name>`
-- Start: `aws codebuild start-build --project-name rds-pgdump-backup-prod-<db_name>`
+- Start: `aws codebuild start-build --project-name rds-pgdump-backup-prod-database_1`
 - Check: `aws codebuild batch-get-builds --ids <build-id> --query 'builds[0].buildStatus'`
 
 Verify in S3 (Backup account)
