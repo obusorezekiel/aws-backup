@@ -25,8 +25,8 @@ s3_allowed_writer_role_arns = [
 # aws_profile = "backup"
 
 # Approach 2: Provide static keys (for testing only)
-# aws_access_key = "AKIARJ52SFAOUCTRHQJG"
-# aws_secret_key = "tBQsIWK7R7qyHMsiYbWUJWXGbMKGj3RgV8giIll/"
+# aws_access_key = ""
+# aws_secret_key = ""
 # aws_session_token = "..." # if using temporary creds
 
 # Lifecycle (examples)
