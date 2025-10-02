@@ -21,4 +21,8 @@ environments/prod/layer3/terraform.tfstate.backup
 environments/prod/layer3/terraform.tfstate.backup.lock.info
 environments/prod/layer3/terraform.tfstate.backup.lock.info
 environments/prod/layer3/.terraform
-
+**/terraform.tfvars
+**/*.auto.tfvars
+**/*.tfvars
+**/.env
+**/.env.local
